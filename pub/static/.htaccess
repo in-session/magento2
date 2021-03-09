@@ -72,7 +72,7 @@ AddType application/xml xml
 
 <IfModule mod_headers.c>
 
-    <FilesMatch .*\.(ico|jpg|jpeg|png|gif|svg|js|css|swf|eot|ttf|otf|woff|woff2|html|json)$>
+    <FilesMatch .*\.(ico|jpg|jpeg|png|gif|svg|webp|js|css|swf|eot|ttf|otf|woff|woff2|html|json)$>
         Header append Cache-Control public
     </FilesMatch>
 
@@ -118,6 +118,7 @@ AddType application/xml xml
     ExpiresByType image/png "access plus 1 year"
     ExpiresByType image/jpg "access plus 1 year"
     ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
     ExpiresByType image/svg+xml "access plus 1 year"
 
     # Fonts
