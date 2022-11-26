@@ -26,6 +26,27 @@ sub vcl_recv {
     if (req.restarts > 0) {
         set req.hash_always_miss = true;
     }
+    
+    # Compression filter. See https://www.varnish-cache.org/trac/wiki/FAQ/Compression
+    if (req.http.Accept-Encoding) {
+        
+        # Comment out for Brotli Support line 34-36
+        # if (req.http.Accept-Encoding ~ "br" && req.url !~"\.(jpg|png|gif|webp|avif|gz|mp3|mov|avi|mpg|mp4|swf|wmf)$") {
+        #    set req.http.X-brotli = "true";
+        # }
+        
+        if (req.url ~ "\.(jpg|jpeg|png|gif|gz|tgz|bz2|tbz|mp3|ogg|swf|flv)$") {
+            # No point in compressing these
+            unset req.http.Accept-Encoding;
+        } elsif (req.http.Accept-Encoding ~ "gzip") {
+            set req.http.Accept-Encoding = "gzip";
+        } elsif (req.http.Accept-Encoding ~ "deflate" && req.http.user-agent !~ "MSIE") {
+            set req.http.Accept-Encoding = "deflate";
+        } else {
+            # unknown algorithm
+            unset req.http.Accept-Encoding;
+        }
+    }
 
     if (req.method == "PURGE") {
         if (client.ip !~ purge) {
@@ -81,21 +102,6 @@ sub vcl_recv {
     # collect all cookies
     std.collect(req.http.Cookie);
 
-    # Compression filter. See https://www.varnish-cache.org/trac/wiki/FAQ/Compression
-    if (req.http.Accept-Encoding) {
-        if (req.url ~ "\.(jpg|jpeg|png|gif|gz|tgz|bz2|tbz|mp3|ogg|swf|flv)$") {
-            # No point in compressing these
-            unset req.http.Accept-Encoding;
-        } elsif (req.http.Accept-Encoding ~ "gzip") {
-            set req.http.Accept-Encoding = "gzip";
-        } elsif (req.http.Accept-Encoding ~ "deflate" && req.http.user-agent !~ "MSIE") {
-            set req.http.Accept-Encoding = "deflate";
-        } else {
-            # unknown algorithm
-            unset req.http.Accept-Encoding;
-        }
-    }
-
     # Remove all marketing get parameters to minimize the cache objects
     if (req.url ~ "(\?|&)(gclid|cx|ie|cof|siteurl|zanpid|origin|fbclid|mc_[a-z]+|utm_[a-z]+|_bta_[a-z]+)=") {
         set req.url = regsuball(req.url, "(gclid|cx|ie|cof|siteurl|zanpid|origin|fbclid|mc_[a-z]+|utm_[a-z]+|_bta_[a-z]+)=[-_A-z0-9+()%.]+&?", "");
@@ -122,10 +128,15 @@ sub vcl_recv {
 }
 
 sub vcl_hash {
+    # Comment out for Brotli Support line 132-134
+    # if (req.http.X-brotli == "true") {
+    #    hash_data("brotli");
+    # }
+    
     if ((req.url !~ "/graphql" || !req.http.X-Magento-Cache-Id) && req.http.cookie ~ "X-Magento-Vary=") {
         hash_data(regsub(req.http.cookie, "^.*?X-Magento-Vary=([^;]+);*.*$", "\1"));
     }
-
+        
     # To make sure http users don't see ssl warning
     if (req.http./* {{ ssl_offloaded_header }} */) {
         hash_data(req.http./* {{ ssl_offloaded_header }} */);
@@ -156,6 +167,14 @@ sub process_graphql_headers {
     }
 }
 
+# Comment out for Brotli Support line 171-176
+# sub vcl_backend_fetch {
+#    if (bereq.http.X-brotli == "true") {
+#        set bereq.http.Accept-Encoding = "br";
+#        unset bereq.http.X-brotli;
+#    }
+# }
+
 sub vcl_backend_response {
 
     set beresp.grace = 3d;
@@ -164,6 +183,12 @@ sub vcl_backend_response {
         set beresp.do_esi = true;
     }
 
+    # Comment out for Brotli Support line 187-191 and remove the line 192-194
+    # if (!bereq.http.Accept-Encoding ~ "br"){
+    #     if (bereq.url ~ "\.js$" || beresp.http.content-type ~ "text") {
+    #        set beresp.do_gzip = true; #only use gzip if no Brotli support enabled
+    #    }
+    # }    
     if (bereq.url ~ "\.js$" || beresp.http.content-type ~ "text") {
         set beresp.do_gzip = true;
     }
