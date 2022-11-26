@@ -31,21 +31,21 @@ sub vcl_recv {
     if (req.http.Accept-Encoding) {
         
         # Comment out for Brotli Support line 34-36
-        # if (req.http.Accept-Encoding ~ "br" && req.url !~"\.(jpg|png|gif|webp|avif|gz|mp3|mov|avi|mpg|mp4|swf|wmf)$") {
+        # if (req.http.Accept-Encoding ~ "br" && req.url ~"\.(html|js|css|svg)$") {
         #    set req.http.X-brotli = "true";
         # }
         
-        if (req.url ~ "\.(jpg|jpeg|png|gif|gz|tgz|bz2|tbz|mp3|ogg|swf|flv)$") {
-            # No point in compressing these
-            unset req.http.Accept-Encoding;
-        } elsif (req.http.Accept-Encoding ~ "gzip") {
-            set req.http.Accept-Encoding = "gzip";
-        } elsif (req.http.Accept-Encoding ~ "deflate" && req.http.user-agent !~ "MSIE") {
-            set req.http.Accept-Encoding = "deflate";
-        } else {
-            # unknown algorithm
-            unset req.http.Accept-Encoding;
-        }
+        #if (req.url ~ "\.(jpg|jpeg|png|gif|gz|tgz|bz2|tbz|mp3|ogg|swf|flv)$") {
+        #    # No point in compressing these
+        #    unset req.http.Accept-Encoding;
+        #} elsif (req.http.Accept-Encoding ~ "gzip") {
+        #    set req.http.Accept-Encoding = "gzip";
+        #} elsif (req.http.Accept-Encoding ~ "deflate" && req.http.user-agent !~ "MSIE") {
+        #    set req.http.Accept-Encoding = "deflate";
+        #} else {
+        #    # unknown algorithm
+        #    unset req.http.Accept-Encoding;
+        #}
     }
 
     if (req.method == "PURGE") {
